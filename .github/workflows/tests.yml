@@ -1,0 +1,64 @@
+name: Checks
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  macos:
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        python: ['3.11', '3.13']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Prepare exact YAML test dependency
+        run: npm install --prefix "$RUNNER_TEMP/guard-test-deps" --ignore-scripts --no-audit --no-fund yaml@2.9.1
+      - name: Python regression and temporary enrollment
+        env:
+          DSH_GUARD_TEST_YAML_PACKAGE: ${{ runner.temp }}/guard-test-deps/node_modules/yaml/package.json
+        run: python -B -m unittest discover -s . -v
+      - name: Host bridge fixtures
+        run: node --test bridge/test-bridge.mjs
+      - name: Build Windows preview source archive
+        run: python -I package_windows.py --output dist/dsh-guard-windows-preview.zip
+
+  windows-preview:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Parse PowerShell entry points
+        shell: powershell
+        run: |
+          foreach ($file in @('Install-DshGuard.ps1', 'Test-DshGuard.ps1')) {
+            $parseErrors = $null
+            $tokens = $null
+            [void][System.Management.Automation.Language.Parser]::ParseFile((Join-Path $PWD $file), [ref]$tokens, [ref]$parseErrors)
+            if ($parseErrors.Count -gt 0) { throw ($parseErrors | Out-String) }
+          }
+      - name: Native fixture acceptance (not real DSH acceptance)
+        shell: powershell
+        run: |
+          .\Test-DshGuard.ps1 -Python (Get-Command python.exe).Source -Node (Get-Command node.exe).Source -Output (Join-Path $env:RUNNER_TEMP 'dsh-guard-report.json')
+      - name: Keep acceptance report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-preview-fixtures
+          path: ${{ runner.temp }}/dsh-guard-report.json
+          if-no-files-found: ignore

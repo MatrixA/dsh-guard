@@ -1,0 +1,884 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="system">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="referrer" content="no-referrer">
+  <title>DSH GUARD · 开发守护</title>
+  <script>
+    try {
+      const theme = localStorage.getItem('dsh-guard-theme');
+      if (['light', 'dark', 'system'].includes(theme)) document.documentElement.dataset.theme = theme;
+    } catch (_) { /* Storage can be unavailable in private browsing. */ }
+  </script>
+  <style>
+    :root {
+      color-scheme: light;
+      --page: #f6f6f3;
+      --surface: #fdfdfb;
+      --raised: #ffffff;
+      --ink: #202620;
+      --secondary: #596158;
+      --muted: #687066;
+      --line: #dce0d7;
+      --soft: #eef0e9;
+      --accent: #a64429;
+      --accent-soft: #f8eae2;
+      --good: #276044;
+      --good-soft: #e8f1e8;
+      --warning: #805517;
+      --warning-soft: #f7efdc;
+      --danger: #a13332;
+      --danger-soft: #faeaea;
+      --focus: #275ebe;
+      --shadow: 0 8px 32px rgb(26 35 25 / 7%);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif;
+      font-synthesis: none;
+      -webkit-font-smoothing: antialiased;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:where(:not([data-theme="light"])) {
+        color-scheme: dark;
+        --page: #141713; --surface: #1c201b; --raised: #242923;
+        --ink: #eef1e8; --secondary: #b6bfb1; --muted: #a2ac9d;
+        --line: #394135; --soft: #282e25;
+        --accent: #efac8e; --accent-soft: #3a2a22;
+        --good: #a2d7b2; --good-soft: #25382a;
+        --warning: #e8c27c; --warning-soft: #393121;
+        --danger: #f2aaa3; --danger-soft: #3e2626;
+        --focus: #a9c7ff; --shadow: 0 8px 32px rgb(0 0 0 / 20%);
+      }
+    }
+    :root[data-theme="dark"] {
+      color-scheme: dark;
+      --page: #141713; --surface: #1c201b; --raised: #242923;
+      --ink: #eef1e8; --secondary: #b6bfb1; --muted: #a2ac9d;
+      --line: #394135; --soft: #282e25;
+      --accent: #efac8e; --accent-soft: #3a2a22;
+      --good: #a2d7b2; --good-soft: #25382a;
+      --warning: #e8c27c; --warning-soft: #393121;
+      --danger: #f2aaa3; --danger-soft: #3e2626;
+      --focus: #a9c7ff; --shadow: 0 8px 32px rgb(0 0 0 / 20%);
+    }
+    * { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+    html { scroll-padding-bottom: 210px; }
+    body { margin: 0; color: var(--ink); background: var(--page); font-size: 14px; line-height: 1.65; }
+    button, a { -webkit-tap-highlight-color: transparent; }
+    button { font: inherit; }
+    button, summary, a { touch-action: manipulation; }
+    a { color: inherit; text-underline-offset: 4px; }
+    button { cursor: pointer; }
+    button:disabled { cursor: not-allowed; opacity: .46; }
+    :focus-visible { outline: 3px solid var(--focus); outline-offset: 4px; }
+    svg { width: 18px; height: 18px; flex: 0 0 auto; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+    .icons { position: absolute; width: 0; height: 0; overflow: hidden; }
+    .skip-link { position: fixed; z-index: 10; top: 10px; left: 10px; transform: translateY(-160%); padding: 10px 16px; background: var(--raised); border: 1px solid var(--line); }
+    .skip-link:focus { transform: translateY(0); }
+    .shell { width: min(1120px, calc(100% - 80px)); margin-inline: auto; }
+    .masthead { min-height: 106px; display: flex; align-items: center; justify-content: space-between; gap: 24px; border-bottom: 1px solid var(--line); }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .brand-mark { width: 36px; height: 40px; color: var(--accent); }
+    .wordmark { font-size: 15px; font-weight: 780; letter-spacing: .13em; line-height: 1.4; }
+    .brand-caption { color: var(--secondary); font-size: 12px; letter-spacing: .12em; margin-top: 3px; }
+    .masthead-tools { display: flex; align-items: center; gap: 20px; }
+    .theme-button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: 0; background: transparent; color: var(--secondary); min-height: 44px; padding: 8px 0; font-size: 12px; }
+    .dsh-link { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; font-weight: 600; text-decoration: none; }
+    .dsh-link:hover { text-decoration: underline; }
+    main { padding-top: 43px; }
+    .eyebrow { font-size: 11px; letter-spacing: .15em; font-weight: 650; color: var(--secondary); }
+    .hero { position: relative; padding: 0 0 30px; }
+    .hero-top { display: flex; gap: 16px; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .connection { display: inline-flex; align-items: center; gap: 7px; font-size: 12px; font-weight: 600; color: var(--secondary); }
+    .connection svg { width: 15px; height: 15px; }
+    .connection[data-tone="good"] { color: var(--good); }
+    .connection[data-tone="warning"] { color: var(--warning); }
+    .hero h1 { margin: 0; max-width: 930px; font-size: clamp(30px, 4.3vw, 48px); line-height: 1.3; letter-spacing: -.045em; font-weight: 680; text-wrap: balance; }
+    .hero-description { color: var(--secondary); font-size: 15px; line-height: 1.85; max-width: 760px; margin: 13px 0 0; }
+    .reason { display: flex; gap: 9px; align-items: baseline; margin: 16px 0 0; padding-left: 13px; border-left: 2px solid var(--line); font-size: 13px; color: var(--secondary); }
+    .reason-label { white-space: nowrap; font-size: 11px; color: var(--muted); }
+    #state-reason { overflow-wrap: anywhere; white-space: pre-wrap; }
+    .sync-line { display: flex; flex-wrap: wrap; gap: 6px 18px; margin-top: 22px; color: var(--muted); font-size: 11px; }
+    .sync-line time { font-variant-numeric: tabular-nums; }
+    .state-strip { display: grid; grid-template-columns: 1.4fr 1fr 1fr; margin: 0 0 28px; padding: 22px 25px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; }
+    .state-strip > div { padding-inline: 25px; border-left: 1px solid var(--line); }
+    .state-strip > div:first-child { border: 0; padding-left: 0; }
+    dt { color: var(--secondary); font-size: 12px; }
+    dd { margin: 0; overflow-wrap: anywhere; }
+    .state-strip dd { display: flex; align-items: center; gap: 9px; margin-top: 7px; font-size: 16px; font-weight: 630; }
+    .health-glyph { width: 19px; height: 19px; }
+    [data-tone="good"] .health-glyph { color: var(--good); }
+    [data-tone="warning"] .health-glyph { color: var(--warning); }
+    [data-tone="danger"] .health-glyph { color: var(--danger); }
+    .grid { display: grid; grid-template-columns: minmax(0, 1.38fr) minmax(0, 1fr); gap: 24px; align-items: start; }
+    .panel { min-width: 0; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); overflow: hidden; }
+    .panel-content { padding: 25px 27px; }
+    .panel-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 22px; }
+    .section-title { display: flex; align-items: center; gap: 10px; margin: 0; font-size: 14px; font-weight: 680; }
+    .section-title svg { color: var(--secondary); }
+    .section-note { color: var(--muted); font-size: 11px; }
+    .tag { display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px; border: 1px solid var(--line); border-radius: 5px; font-size: 11px; font-weight: 550; color: var(--secondary); background: var(--soft); white-space: nowrap; }
+    .tag svg { width: 13px; height: 13px; }
+    .tag[data-tone="good"] { color: var(--good); background: var(--good-soft); border-color: transparent; }
+    .tag[data-tone="warning"] { color: var(--warning); background: var(--warning-soft); border-color: transparent; }
+    .tag[data-tone="danger"] { color: var(--danger); background: var(--danger-soft); border-color: transparent; }
+    .operation { font-size: 20px; line-height: 1.5; letter-spacing: -.025em; font-weight: 620; margin: 0 0 8px; overflow-wrap: anywhere; }
+    .workflow-message { color: var(--secondary); min-height: 24px; margin: 0 0 25px; font-size: 13px; overflow-wrap: anywhere; white-space: pre-wrap; }
+    .rows { margin: 0; }
+    .rows > div { display: grid; grid-template-columns: 104px minmax(0, 1fr); align-items: baseline; gap: 16px; padding-block: 10px; border-top: 1px solid var(--line); }
+    .rows dd { font-size: 13px; }
+    .rows time { font-variant-numeric: tabular-nums; }
+    .panel-foot { display: flex; align-items: flex-start; gap: 8px; padding: 14px 27px; border-top: 1px solid var(--line); color: var(--secondary); font-size: 12px; background: var(--soft); }
+    .panel-foot svg { width: 16px; height: 16px; margin-top: 2px; }
+    .guard-explanation { font-size: 12px; color: var(--secondary); margin: 0 0 20px; }
+    .content-row { margin-top: 24px; }
+    .capabilities { list-style: none; padding: 2px 6px 2px 0; margin: 0; max-height: 420px; overflow: auto; scrollbar-width: thin; }
+    .capability-toggle { margin-top: 14px; min-height: 36px; }
+    .capability { display: flex; justify-content: space-between; align-items: center; gap: 14px; padding: 14px 0; border-top: 1px solid var(--line); }
+    .capability:first-child { padding-top: 0; border: 0; }
+    .capability-name { font-size: 13px; font-weight: 550; overflow-wrap: anywhere; }
+    .required { display: inline-block; font-size: 10px; color: var(--muted); margin-left: 7px; font-weight: 400; }
+    .capability .tag { flex-shrink: 0; white-space: normal; max-width: 45%; }
+    .empty { display: flex; align-items: flex-start; gap: 13px; padding-block: 12px 15px; color: var(--secondary); }
+    .empty > svg { width: 22px; height: 22px; margin-top: 2px; }
+    .empty p { margin: 0; font-size: 13px; }
+    .empty small { display: block; margin-top: 5px; font-size: 12px; color: var(--muted); }
+    .timeline-scroll { max-height: 440px; overflow: auto; scrollbar-width: thin; scrollbar-color: var(--line) transparent; padding: 2px 3px; margin: -2px -3px; }
+    .timeline { list-style: none; margin: 0; padding: 0 0 0 7px; }
+    .timeline li { position: relative; border-left: 1px solid var(--line); padding: 0 0 24px 22px; }
+    .timeline li:last-child { padding-bottom: 3px; border-color: transparent; }
+    .timeline li::before { content: ""; position: absolute; top: 7px; left: -4px; width: 7px; height: 7px; border: 1.5px solid var(--secondary); border-radius: 50%; background: var(--surface); }
+    .event-title { font-size: 13px; font-weight: 600; overflow-wrap: anywhere; }
+    .event-time { display: block; color: var(--muted); font-size: 11px; margin-top: 2px; font-variant-numeric: tabular-nums; }
+    .event-details { margin: 7px 0 0; font-size: 12px; color: var(--secondary); overflow-wrap: anywhere; white-space: pre-wrap; }
+    .diagnostics { margin-top: 24px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+    .diagnostics summary { display: flex; align-items: center; justify-content: space-between; gap: 14px; min-height: 64px; padding: 15px 2px; list-style: none; cursor: pointer; font-size: 13px; font-weight: 600; }
+    .diagnostics summary::-webkit-details-marker { display: none; }
+    .diagnostic-label { display: inline-flex; align-items: center; gap: 10px; }
+    .diagnostics .chevron { width: 15px; height: 15px; transition: transform .15s; }
+    .diagnostics[open] .chevron { transform: rotate(180deg); }
+    .diagnostic-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 40px; margin-bottom: 23px; padding: 0 2px; }
+    .diagnostic-grid .rows > div { grid-template-columns: 106px minmax(0, 1fr); }
+    .diagnostic-grid dd { white-space: pre-wrap; }
+    .diagnostic-note { margin: 0 2px 20px; color: var(--muted); font-size: 12px; }
+    .page-foot { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 5px 20px; padding: 22px 0 28px; color: var(--muted); font-size: 11px; }
+    .action-dock { position: sticky; z-index: 3; bottom: 0; background: var(--surface); border-top: 1px solid var(--line); box-shadow: 0 -6px 24px rgb(0 0 0 / 3%); padding: 17px 0 max(17px, env(safe-area-inset-bottom)); }
+    .action-layout { display: flex; align-items: center; justify-content: space-between; gap: 18px; }
+    .action-info { min-width: 0; }
+    .action-heading { display: flex; align-items: center; gap: 7px; margin: 0; font-size: 12px; font-weight: 650; }
+    .action-heading svg { width: 15px; height: 15px; }
+    .action-status { margin: 3px 0 0; color: var(--secondary); font-size: 11px; max-width: 370px; overflow-wrap: anywhere; }
+    .action-error { margin: 7px 0 0; color: var(--danger); font-size: 12px; max-width: 500px; overflow-wrap: anywhere; }
+    .action-buttons { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; flex-shrink: 0; }
+    .button { display: inline-flex; justify-content: center; align-items: center; gap: 7px; min-height: 42px; padding: 9px 13px; border: 1px solid var(--line); border-radius: 7px; background: var(--surface); color: var(--ink); font-size: 12px; font-weight: 600; line-height: 1.5; text-decoration: none; }
+    .button svg { width: 15px; height: 15px; }
+    .button:not(:disabled):hover { background: var(--soft); }
+    .button-primary { background: var(--ink); border-color: var(--ink); color: var(--surface); }
+    .button-primary:not(:disabled):hover { background: var(--secondary); border-color: var(--secondary); }
+    .button-danger { color: var(--danger); }
+    .button-danger:not(:disabled):hover { background: var(--danger-soft); border-color: var(--danger); }
+    .button-warning { color: var(--accent); background: var(--accent-soft); border-color: transparent; }
+    .button-warning:not(:disabled):hover { border-color: var(--accent); background: var(--accent-soft); }
+    .toast { position: fixed; z-index: 8; right: 24px; top: 24px; display: flex; align-items: flex-start; gap: 12px; padding: 16px 18px; max-width: min(430px, calc(100% - 32px)); background: var(--raised); border: 1px solid var(--line); border-radius: 10px; box-shadow: var(--shadow); font-size: 13px; }
+    .toast p { margin: 0; overflow-wrap: anywhere; }
+    .toast button { display: flex; align-items: center; justify-content: center; padding: 0; min-width: 28px; min-height: 28px; background: transparent; border: 0; color: var(--secondary); margin: -4px -7px -4px 0; }
+    dialog { width: min(460px, calc(100% - 32px)); max-height: calc(100% - 48px); padding: 30px; border: 1px solid var(--line); border-radius: 14px; background: var(--raised); color: var(--ink); box-shadow: var(--shadow); }
+    dialog::backdrop { background: rgb(10 16 10 / 48%); }
+    .dialog-symbol { color: var(--warning); background: var(--warning-soft); border-radius: 9px; width: 40px; height: 40px; display: grid; place-items: center; margin-bottom: 20px; }
+    dialog h2 { margin: 0 0 10px; font-size: 21px; font-weight: 650; letter-spacing: -.025em; }
+    dialog p { margin: 0; font-size: 14px; line-height: 1.85; color: var(--secondary); }
+    .dialog-actions { display: flex; justify-content: flex-end; gap: 9px; margin-top: 27px; }
+    .dialog-actions .button { min-width: 82px; }
+    .no-script { padding: 15px; color: var(--danger); background: var(--danger-soft); border: 1px solid var(--line); }
+    @media (min-width: 1400px) { .shell { width: 1120px; } main { padding-top: 54px; } }
+    @media (max-width: 860px) {
+      .shell { width: calc(100% - 48px); }
+      .grid { grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 18px; }
+      .panel-content { padding: 22px; }
+      .panel-foot { padding-inline: 22px; }
+      .rows > div { grid-template-columns: 87px minmax(0, 1fr); gap: 12px; }
+      .action-layout { align-items: flex-start; flex-direction: column; gap: 12px; }
+      .action-buttons { width: 100%; justify-content: flex-start; }
+      .action-status { max-width: none; }
+      .action-dock { padding-top: 13px; padding-bottom: max(13px, env(safe-area-inset-bottom)); }
+    }
+    @media (max-width: 620px) {
+      .shell { width: calc(100% - 36px); }
+      .masthead { min-height: 89px; gap: 10px; }
+      .brand { gap: 8px; }
+      .brand-mark { width: 28px; height: 34px; }
+      .wordmark { font-size: 12px; letter-spacing: .1em; }
+      .brand-caption { font-size: 10px; }
+      .masthead-tools { gap: 12px; }
+      .theme-button { gap: 5px; font-size: 11px; }
+      .theme-button svg { width: 16px; height: 16px; }
+      .dsh-link { font-size: 11px; gap: 3px; }
+      .dsh-link svg { width: 14px; height: 14px; }
+      main { padding-top: 29px; }
+      .hero-top { gap: 8px; margin-bottom: 21px; }
+      .eyebrow { font-size: 10px; letter-spacing: .08em; }
+      .connection { font-size: 10px; gap: 4px; }
+      .hero h1 { font-size: 31px; }
+      .hero-description { font-size: 13px; margin-top: 12px; }
+      .reason { flex-direction: column; gap: 2px; }
+      .sync-line { margin-top: 20px; gap: 3px 12px; font-size: 10px; }
+      .hero { padding-bottom: 24px; }
+      .state-strip { grid-template-columns: 1.25fr 1fr .72fr; padding: 17px 15px; margin-bottom: 18px; }
+      .state-strip > div { padding-inline: 12px; }
+      .state-strip > div:last-child { padding-right: 0; }
+      .state-strip dt { font-size: 10px; }
+      .state-strip dd { font-size: 12px; gap: 5px; margin-top: 7px; align-items: flex-start; }
+      .health-glyph { width: 15px; height: 15px; margin-top: 2px; }
+      .grid { grid-template-columns: minmax(0, 1fr); gap: 18px; }
+      .panel-content { padding: 21px; }
+      .panel-header { margin-bottom: 20px; }
+      .panel-foot { padding-inline: 21px; }
+      .content-row { margin-top: 18px; }
+      .rows > div { grid-template-columns: 91px minmax(0, 1fr); }
+      .diagnostic-grid { grid-template-columns: 1fr; gap: 0; }
+      .diagnostic-grid .rows + .rows { margin-top: 13px; }
+      .diagnostics { margin-top: 18px; }
+      .action-heading { font-size: 11px; }
+      .action-status, .action-error { font-size: 11px; }
+      .action-buttons { gap: 7px; }
+      .action-buttons .button { flex: 1 1 auto; padding-inline: 9px; font-size: 11px; min-height: 42px; }
+      .action-buttons .button svg { width: 14px; height: 14px; }
+      .action-layout { gap: 10px; }
+      .page-foot { padding-block: 20px; font-size: 10px; }
+      .toast { right: 16px; top: 16px; }
+      dialog { padding: 25px; }
+    }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; animation: none !important; } }
+    @media (forced-colors: active) { .tag, .button, .panel, .state-strip { border: 1px solid CanvasText; } .health-glyph, .connection, .button-danger { color: CanvasText; } }
+  </style>
+</head>
+<body>
+  <svg class="icons" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <symbol id="i-shield" viewBox="0 0 24 28"><path d="M12 2 22 6v8c0 6-6 10-10 12C8 24 2 20 2 14V6Z"/><path d="m7 13 3 3 7-7"/></symbol>
+      <symbol id="i-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/></symbol>
+      <symbol id="i-alert" viewBox="0 0 24 24"><path d="M10.3 4.7 2.4 18.4A1.7 1.7 0 0 0 3.9 21h16.2a1.7 1.7 0 0 0 1.5-2.6L13.7 4.7a2 2 0 0 0-3.4 0Z"/><path d="M12 9v5m0 3v.1"/></symbol>
+      <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+      <symbol id="i-offline" viewBox="0 0 24 24"><path d="m3 3 18 18M8.5 8.5a8 8 0 0 1 9 2M5 10.5a12 12 0 0 0-2 1.4M8 15a6 6 0 0 1 3-1m4.5.5.5.5M12 19h.01M21 12a13 13 0 0 0-9-4"/></symbol>
+      <symbol id="i-pause" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9 8v8m6-8v8"/></symbol>
+      <symbol id="i-stop" viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="2"/></symbol>
+      <symbol id="i-play" viewBox="0 0 24 24"><path d="m8 5 11 7-11 7Z"/></symbol>
+      <symbol id="i-restart" viewBox="0 0 24 24"><path d="M20 7v5h-5M20 12a8 8 0 1 0-2 5M20 7v5"/></symbol>
+      <symbol id="i-checkpoint" viewBox="0 0 24 24"><path d="M5 3h12l3 3v15H4V3h1ZM8 3v6h8V3M8 21v-7h8v7"/></symbol>
+      <symbol id="i-return" viewBox="0 0 24 24"><path d="m9 5-6 6 6 6M3 11h11a7 7 0 0 1 7 7v2"/></symbol>
+      <symbol id="i-external" viewBox="0 0 24 24"><path d="M8 5H5v14h14v-3M13 4h7v7M20 4 10 14"/></symbol>
+      <symbol id="i-theme" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 4v16"/><path d="M12 4a8 8 0 0 1 0 16Z" fill="currentColor" stroke="none"/></symbol>
+      <symbol id="i-workflow" viewBox="0 0 24 24"><rect x="3" y="4" width="7" height="6" rx="1"/><rect x="14" y="14" width="7" height="6" rx="1"/><path d="M6.5 10v7H14M10 7h7.5v7"/></symbol>
+      <symbol id="i-heart" viewBox="0 0 24 24"><path d="M3 12h4l3-7 4 14 3-7h4"/></symbol>
+      <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></symbol>
+      <symbol id="i-activity" viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></symbol>
+      <symbol id="i-link" viewBox="0 0 24 24"><path d="m10 13 4-4M8 16l-1 1a4.2 4.2 0 0 1-6-6l4-4a4.2 4.2 0 0 1 6 0M13 17a4.2 4.2 0 0 0 6 0l4-4a4.2 4.2 0 0 0-6-6l-1 1" transform="translate(0 -1) scale(.94)"/></symbol>
+      <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6m0-10v.1"/></symbol>
+      <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+      <symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></symbol>
+    </defs>
+  </svg>
+  <a class="skip-link" href="#main">跳到主要内容</a>
+  <header class="masthead shell">
+    <div class="brand">
+      <svg class="brand-mark" aria-hidden="true"><use href="#i-shield"/></svg>
+      <div><div class="wordmark">DSH GUARD</div><div class="brand-caption">开发守护 · 独立运行</div></div>
+    </div>
+    <nav class="masthead-tools" aria-label="控制台工具">
+      <button id="theme-toggle" class="theme-button" type="button" aria-label="主题：跟随系统；切换为浅色">
+        <svg aria-hidden="true"><use href="#i-theme"/></svg><span id="theme-label">跟随系统</span>
+      </button>
+      <a id="dsh-link" class="dsh-link" href="/open-dsh" target="_blank" rel="noopener noreferrer" aria-label="打开 DSH，新标签页">
+        打开 DSH<svg aria-hidden="true"><use href="#i-external"/></svg>
+      </a>
+    </nav>
+  </header>
+
+  <main id="main" class="shell" tabindex="-1">
+    <noscript><p class="no-script">请启用 JavaScript 以读取守护器状态和使用控制。此页面独立于 DSH 运行。</p></noscript>
+    <section class="hero" aria-labelledby="state-title">
+      <div class="hero-top">
+        <span class="eyebrow">本地开发环境 / GUARDIAN</span>
+        <span id="connection-status" class="connection" role="status" aria-live="polite" aria-atomic="true" data-tone="neutral">
+          <svg aria-hidden="true"><use id="connection-icon" href="#i-clock"/></svg><span id="connection-label">正在连接</span>
+        </span>
+      </div>
+      <h1 id="state-title">正在连接守护器</h1>
+      <p id="state-description" class="hero-description">读取本地运行状态。即使 DSH 暂时退出，也可在这里查看守护与恢复进展。</p>
+      <div id="reason-block" class="reason" hidden><span class="reason-label">守护器说明</span><span id="state-reason"></span></div>
+      <div class="sync-line"><span>最近同步 <time id="last-sync">--</time></span><span id="poll-note">每 3 秒更新 · 后台暂停</span></div>
+    </section>
+
+    <dl class="state-strip" aria-label="DSH 运行概况">
+      <div><dt id="dsh-health-label">DSH 状态</dt><dd id="dsh-health-wrap" data-tone="neutral"><svg class="health-glyph" aria-hidden="true"><use id="dsh-health-icon" href="#i-clock"/></svg><span id="dsh-health">--</span></dd></div>
+      <div><dt>守护模式</dt><dd id="guard-mode">--</dd></div>
+      <div><dt>DSH 端口</dt><dd id="port">--</dd></div>
+    </dl>
+
+    <div class="grid">
+      <section class="panel" aria-labelledby="workflow-heading">
+        <div class="panel-content">
+          <div class="panel-header"><h2 id="workflow-heading" class="section-title"><svg aria-hidden="true"><use href="#i-workflow"/></svg>开发与恢复</h2><span id="workflow-mode" class="tag">未上报</span></div>
+          <p id="current-operation" class="operation">等待工作流状态</p>
+          <p id="workflow-message" class="workflow-message">守护器连接后，将显示当前操作与恢复点。</p>
+          <dl class="rows">
+            <div><dt>最近恢复点</dt><dd><time id="checkpoint-time">--</time></dd></div>
+            <div><dt>开发改动</dt><dd id="pending-changes">--</dd></div>
+          </dl>
+        </div>
+        <div class="panel-foot"><svg aria-hidden="true"><use href="#i-link"/></svg><span id="bridge-status">开发桥接 · --</span></div>
+      </section>
+      <section class="panel" aria-labelledby="guard-heading">
+        <div class="panel-content">
+          <div class="panel-header"><h2 id="guard-heading" class="section-title"><svg aria-hidden="true"><use href="#i-heart"/></svg>守护器健康</h2><span id="guard-health" class="tag">等待心跳</span></div>
+          <p class="guard-explanation">守护器在 DSH 之外运行。心跳与 DSH 可用性分别判断。</p>
+          <dl class="rows">
+            <div><dt>最近心跳</dt><dd><time id="guard-heartbeat">--</time></dd></div>
+            <div><dt>守护器版本</dt><dd id="guard-version">--</dd></div>
+            <div><dt>自动修复</dt><dd id="repair-status">--</dd></div>
+          </dl>
+        </div>
+        <div class="panel-foot"><svg aria-hidden="true"><use href="#i-shield"/></svg><span>修复权限与来源沿用现有设置</span></div>
+      </section>
+    </div>
+
+    <div class="grid content-row">
+      <section class="panel" aria-labelledby="capabilities-heading">
+        <div class="panel-content">
+          <div class="panel-header"><h2 id="capabilities-heading" class="section-title"><svg aria-hidden="true"><use href="#i-grid"/></svg>能力检查</h2><span id="capability-summary" class="section-note">等待上报</span></div>
+          <div id="capability-empty" class="empty"><svg aria-hidden="true"><use href="#i-grid"/></svg><div><p id="capability-empty-title">尚未收到能力检查</p><small id="capability-empty-note">这里会列出 DSH 的能力及各自状态。</small></div></div>
+          <ul id="capability-list" class="capabilities" aria-label="DSH 能力状态，可滚动查看" tabindex="0" hidden></ul>
+          <button id="capability-toggle" class="button capability-toggle" type="button" aria-expanded="false" hidden>查看全部能力</button>
+        </div>
+      </section>
+      <section class="panel" aria-labelledby="events-heading">
+        <div class="panel-content">
+          <div class="panel-header"><h2 id="events-heading" class="section-title"><svg aria-hidden="true"><use href="#i-activity"/></svg>最近活动</h2><span id="event-count" class="section-note">等待上报</span></div>
+          <div id="event-empty" class="empty"><svg aria-hidden="true"><use href="#i-clock"/></svg><div><p id="event-empty-title">等待活动记录</p><small id="event-empty-note">只显示守护器实际返回的事件。</small></div></div>
+          <div id="timeline-scroll" class="timeline-scroll" role="region" aria-label="活动时间线，最新在前" tabindex="0" hidden><ol id="event-list" class="timeline"></ol></div>
+        </div>
+      </section>
+    </div>
+
+    <details id="diagnostics" class="diagnostics">
+      <summary><span class="diagnostic-label"><svg aria-hidden="true"><use href="#i-info"/></svg>诊断详情</span><svg class="chevron" aria-hidden="true"><use href="#i-chevron"/></svg></summary>
+      <div class="diagnostic-grid">
+        <dl class="rows">
+          <div><dt>当前版本</dt><dd id="release">--</dd></div>
+          <div><dt>已知良好版本</dt><dd id="known-good">--</dd></div>
+          <div><dt>受管进程</dt><dd id="owned-child">--</dd></div>
+          <div><dt>熔断状态</dt><dd id="breaker">--</dd></div>
+          <div><dt>最近连接错误</dt><dd id="connection-error">--</dd></div>
+        </dl>
+        <dl class="rows">
+          <div><dt>本次重启</dt><dd id="incident-restarts">--</dd></div>
+          <div><dt>修复尝试</dt><dd id="incident-attempts">--</dd></div>
+          <div><dt>修复轮次</dt><dd id="incident-turns">--</dd></div>
+          <div><dt>修复费用 / USD</dt><dd id="incident-usd">--</dd></div>
+          <div><dt>费用核算</dt><dd id="incident-accounting">--</dd></div>
+        </dl>
+      </div>
+      <p id="diagnostic-note" class="diagnostic-note">未上报的值显示为 --。诊断信息不包含控制令牌。</p>
+    </details>
+    <footer class="page-foot"><span>外部守护控制台 · 不依赖 DSH 页面运行</span><span>故障恢复自动执行 · 控制操作由你确认</span></footer>
+  </main>
+
+  <aside id="action-dock" class="action-dock" aria-label="守护操作">
+    <div class="shell action-layout">
+      <div class="action-info">
+        <p class="action-heading"><svg aria-hidden="true"><use href="#i-shield"/></svg><span id="action-heading">守护操作</span></p>
+        <p id="action-status" class="action-status" role="status" aria-live="polite" aria-atomic="true">连接后检查可用操作。</p>
+        <p id="action-error" class="action-error" role="alert" aria-atomic="true" hidden></p>
+      </div>
+      <div id="action-buttons" class="action-buttons" aria-busy="false">
+        <button id="action-resume" class="button button-primary" data-action="resume" type="button" hidden disabled><svg aria-hidden="true"><use href="#i-play"/></svg>恢复守护</button>
+        <button id="action-checkpoint" class="button button-primary" data-action="checkpoint" type="button" disabled><svg aria-hidden="true"><use href="#i-checkpoint"/></svg>创建恢复点</button>
+        <button id="action-return-development" class="button button-warning" data-action="return-development" type="button" hidden disabled><svg aria-hidden="true"><use href="#i-return"/></svg>返回开发</button>
+        <button id="action-restart" class="button" data-action="restart" type="button" disabled><svg aria-hidden="true"><use href="#i-restart"/></svg>重启 DSH</button>
+        <button id="action-stop" class="button button-danger" data-action="stop" type="button" disabled><svg aria-hidden="true"><use href="#i-stop"/></svg>停止守护</button>
+      </div>
+    </div>
+  </aside>
+
+  <dialog id="confirm-dialog" aria-labelledby="confirm-title" aria-describedby="confirm-message">
+    <div class="dialog-symbol"><svg aria-hidden="true"><use href="#i-alert"/></svg></div>
+    <h2 id="confirm-title">确认操作</h2>
+    <p id="confirm-message"></p>
+    <form method="dialog" class="dialog-actions"><button id="confirm-cancel" class="button" value="cancel" autofocus>取消</button><button id="confirm-submit" class="button button-danger" type="button">确认</button></form>
+  </dialog>
+  <div id="toast" class="toast" hidden><svg aria-hidden="true"><use href="#i-info"/></svg><p id="toast-message" role="status" aria-live="polite" aria-atomic="true"></p><button id="toast-close" type="button" aria-label="关闭通知"><svg aria-hidden="true"><use href="#i-close"/></svg></button></div>
+
+  <script>
+    'use strict';
+    (() => {
+      const $ = id => document.getElementById(id);
+      const POLL_MS = 3000;
+      const STALE_MS = 10000;
+      const HEARTBEAT_MS = 45000;
+      const reasonLabels = {
+        'Authenticated session/list succeeded': '本地服务已通过认证并正常响应。',
+        'Native installation or hot reload is in progress': '正在等待原生安装或热加载完成，守护器不会抢占操作。',
+        'An optional plugin or development operation failed': '部分插件或开发配置需要处理，正常能力继续运行。',
+        'A required Host capability is unavailable': '关键运行能力不可用，正在按恢复策略处理。',
+        'Owned DSH process exited': '受管 DSH 已退出，正在检查并尝试恢复。',
+        'Stopped by user': '已暂停自动启动，守护控制台仍然在线。',
+        'Starting managed DSH': '正在启动受管 DSH，随后确认认证接口与插件能力。',
+        'Connection refused': 'DSH 暂未接受连接，正在持续检查。',
+        'Authenticated readiness timed out or malformed': 'DSH 响应超时或格式异常，正在检查是否需要恢复。'
+      };
+      const healthLabels = { ready: '已就绪', degraded: '能力受限', unknown: '尚未确认', failed: '不可用', blocked: '已阻断', live: '检测到服务' };
+      const modeLabels = { manage: '主动守护', observe: '仅观察', stopped: '已停止' };
+      const workflowLabels = { development: '开发模式', rescue: '救援模式', fixed: '固定版本', supervision: 'Windows 守护预览' };
+      const phaseLabels = {
+        idle: '等待操作', watching: '监测开发环境', monitoring: '监测开发环境', running: '运行中',
+        busy: '正在安装或热加载', changing: '开发改动待验证', observing: '正在观察环境',
+        development: '开发环境运行中', ready: '环境已就绪', starting: '正在启动 DSH', stopping: '正在停止 DSH',
+        stopped: '守护已停止', restarting: '正在重启 DSH', checking: '正在检查环境', probing: '正在探测健康状态',
+        validating: '正在验证环境', checkpointing: '正在创建恢复点', checkpoint: '正在创建恢复点',
+        repairing: '正在修复', recovering: '正在恢复', restoring: '正在恢复', rescue: '救援环境运行中',
+        'returning-development': '正在返回开发环境', 'returning-to-development': '正在返回开发环境',
+        rollback: '正在回退', 'rolling-back': '正在回退', blocked: '等待人工处理', failed: '操作未完成', fixed: '固定版本运行中'
+      };
+      const capabilityLabels = {
+        web: 'Web 界面', api: 'API 服务', tools: '工具调用', sessions: '会话服务', storage: '持久化存储',
+        model: '模型连接', models: '模型服务', bridge: '开发桥接', 'development-bridge': '开发桥接',
+        'agent-loop': 'Agent 运行循环', 'session-query': '会话查询', 'api-proxy': 'API 代理',
+        'web-ui': 'Web 界面', 'model-routing': '模型路由', sandbox: '沙箱', approvals: '操作审批',
+        mcp: 'MCP 服务', skills: '技能加载', subagents: '子 Agent', plugins: '插件加载',
+        include: '宿主组合', webserver: 'Web 服务', 'web-runtime': 'Web 运行时', modules: '页面模块',
+        connection: '实时连接', 'tool-executor-native': '工具执行器', 'tool-executor-ptc': '代码工具执行器',
+        'bridge:loader': '插件加载状态', 'bridge:patch-syntax': '开发配置语法', 'bridge:bundle-inventory': '插件清单'
+      };
+      const capabilityStatusLabels = {
+        ready: '就绪', healthy: '正常', ok: '正常', available: '可用', passed: '通过', connected: '已连接',
+        degraded: '能力受限', stale: '已过期', missing: '缺失', failed: '失败', blocked: '已阻断',
+        unavailable: '不可用', error: '错误', unknown: '未确认', pending: '待检查', checking: '检查中',
+        disabled: '未启用', stopped: '已停止'
+      };
+      const eventLabels = {
+        launched: 'DSH 进程已启动', started: '守护已启动', stopped: '守护已停止', resumed: '守护已恢复',
+        restarted: 'DSH 已重启', 'circuit-open': '安全熔断已触发', 'circuit-closed': '安全熔断已解除',
+        'containment-proved': '隔离检查已通过', 'claude-rejected': '修复请求被拒绝', 'repair-rejected': '修复方案被拒绝',
+        'repair-started': '开始修复', 'repair-completed': '修复已完成', 'repair-failed': '修复失败',
+        'transaction-restored': '发布事务已恢复', published: '版本已发布', validated: '版本验证已通过',
+        'checkpoint-created': '恢复点已创建', checkpoint: '恢复点已创建', 'checkpoint-failed': '恢复点创建失败',
+        'rescue-started': '已进入救援模式', 'rescue-entered': '已进入救援模式', 'rescue-ready': '救援环境已就绪',
+        'return-development': '已返回开发环境', 'development-restored': '开发环境已恢复',
+        'bridge-connected': '开发桥接已连接', 'bridge-stale': '开发桥接已过期', 'bridge-missing': '开发桥接缺失',
+        'health-changed': 'DSH 健康状态已变化', 'guard-started': '守护器已启动', 'guard-stopped': '守护器已停止',
+        rollback: '版本已回退', 'rollback-completed': '版本回退已完成', 'control-accepted': '控制请求已受理',
+        'manual-stop': '已手动停止守护'
+      };
+      const detailLabels = { reason: '原因', message: '说明', release: '版本', pid: '进程', action: '操作', error: '错误', errors: '错误', phase: '阶段', checks: '检查项', exit: '退出码', subtype: '类型' };
+      const actionLabels = { stop: '停止守护', resume: '恢复守护', restart: '重启 DSH', checkpoint: '创建恢复点', 'return-development': '返回开发' };
+      const confirmations = {
+        stop: ['停止守护？', '将请求停止守护及其管理的 DSH 进程。正在进行的 DSH 会话可能中断；之后可通过「恢复守护」继续。', '确认停止'],
+        restart: ['重启 DSH？', '将请求结束当前受管的 DSH 进程并重新启动。正在进行的会话与工具调用可能中断，请先保存手头的工作。', '确认重启'],
+        'return-development': ['返回开发环境？', '先独立验证开发配置和插件，再尝试切回。切换会重启 DSH；未通过检查时继续保留救援环境。', '确认返回开发']
+      };
+      const state = {
+        data: null, lastSync: null, connected: false, error: '', statusRequest: null, actionRequest: null,
+        pollTimer: null, toastTimer: null, disposed: false, busy: false, confirmAction: null, notice: '',
+        capabilityKey: null, eventKey: null, pending: null, allCapabilities: false
+      };
+      const dateFormatter = new Intl.DateTimeFormat('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+      const own = (map, key) => typeof key === 'string' && Object.hasOwn(map, key) ? map[key] : null;
+      const text = value => value === null || value === undefined || value === '' ? '--' : typeof value === 'object' ? JSON.stringify(value, null, 2) : String(value);
+      function setText(id, value) {
+        const next = text(value);
+        if ($(id).textContent !== next) $(id).textContent = next;
+      }
+      function timestamp(value) {
+        if (value === null || value === undefined || value === '') return null;
+        let ms;
+        if (typeof value === 'number' && Number.isFinite(value)) ms = Math.abs(value) < 1e12 ? value * 1000 : value;
+        else if (typeof value === 'string') ms = Date.parse(value);
+        if (!Number.isFinite(ms) || !Number.isFinite(new Date(ms).getTime())) return null;
+        return ms;
+      }
+      function setTime(id, value) {
+        const ms = timestamp(value);
+        setText(id, ms === null ? '--' : dateFormatter.format(ms));
+        if (ms === null) $(id).removeAttribute('datetime');
+        else $(id).setAttribute('datetime', new Date(ms).toISOString());
+      }
+      function toneFor(value) {
+        if (['ready', 'healthy', 'ok', 'available', 'passed', 'connected'].includes(value)) return 'good';
+        if (['failed', 'blocked', 'unavailable', 'error', 'missing'].includes(value)) return 'danger';
+        if (['degraded', 'stale'].includes(value)) return 'warning';
+        return 'neutral';
+      }
+      function iconFor(tone) { return tone === 'good' ? 'i-check' : tone === 'danger' || tone === 'warning' ? 'i-alert' : 'i-clock'; }
+      function makeIcon(id) {
+        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svg.setAttribute('aria-hidden', 'true');
+        const use = document.createElementNS('http://www.w3.org/2000/svg', 'use');
+        use.setAttribute('href', '#' + id);
+        svg.append(use);
+        return svg;
+      }
+      function makeNode(tag, className, value) {
+        const node = document.createElement(tag);
+        if (className) node.className = className;
+        if (value !== undefined) node.textContent = text(value);
+        return node;
+      }
+      function isFresh() {
+        return Boolean(state.data && state.connected && !document.hidden && state.lastSync !== null && Date.now() - state.lastSync <= STALE_MS);
+      }
+      function token() { return typeof state.data?.control_token === 'string' ? state.data.control_token.trim() : ''; }
+      function actionVisible(action) {
+        const d = state.data;
+        if (action === 'resume') return Boolean(d && (d.mode === 'stopped' || d.mode === 'observe' || d.health === 'blocked' || d.breaker));
+        if (action === 'return-development') return d?.workflow?.mode === 'rescue';
+        if (action === 'checkpoint') return !d || d.workflow?.mode === 'development';
+        return !d || d.mode !== 'stopped';
+      }
+      function canAct(action) {
+        if (!own(actionLabels, action) || !isFresh() || !token() || state.busy || !actionVisible(action)) return false;
+        if (action === 'stop') return state.pending?.action !== 'stop';
+        if (state.pending || state.data?.control_pending) return false;
+        const d = state.data;
+        if (action === 'restart' && (d.mode !== 'manage' || d.breaker)) return false;
+        if (['restart', 'checkpoint', 'return-development'].includes(action) && ['busy', 'checkpointing', 'recovering', 'starting'].includes(d.workflow?.phase)) return false;
+        if (action === 'checkpoint' && (d.mode !== 'manage' || d.health !== 'ready' || d.workflow?.bridge !== 'connected')) return false;
+        return true;
+      }
+      function renderActions() {
+        for (const button of document.querySelectorAll('[data-action]')) {
+          const action = button.dataset.action;
+          button.hidden = !actionVisible(action);
+          button.disabled = !canAct(action);
+        }
+        $('action-buttons').setAttribute('aria-busy', String(state.busy));
+        let heading = '守护操作';
+        let hint;
+        if (state.busy || state.pending) hint = state.notice;
+        else if (state.data?.control_pending) hint = '已有操作正在执行，完成后会更新结果。';
+        else if (!state.data) hint = state.error ? '守护器连接恢复后可用。' : '连接后检查可用操作。';
+        else if (!isFresh()) hint = document.hidden ? '后台暂停更新，返回页面后重新确认状态。' : '状态已过期，连接恢复后可操作。';
+        else if (!token()) { heading = '只读状态'; hint = '未提供控制令牌，当前仅可查看状态。'; }
+        else if (state.notice) hint = state.notice;
+        else if (state.data.mode === 'stopped') hint = '已手动停止。恢复守护需由你发起。';
+        else if (state.data.health === 'blocked' || state.data.breaker) hint = '守护已阻断。请先查看原因，再决定是否恢复。';
+        else if (state.data.workflow?.mode === 'rescue') hint = '当前为救援环境；确认开发环境后可手动返回。';
+        else hint = '操作按现有权限执行；不会自动提交控制请求。';
+        setText('action-heading', heading);
+        setText('action-status', hint);
+      }
+      function renderConnection() {
+        const fresh = isFresh();
+        let label = '正在连接';
+        let icon = 'i-clock';
+        let tone = 'neutral';
+        if (document.hidden) { label = '已暂停 · 后台标签页'; icon = 'i-pause'; }
+        else if (fresh) { label = '实时 · 已连接'; icon = 'i-check'; tone = 'good'; }
+        else if (state.data || state.error) { label = '已过期 · 连接中断'; icon = 'i-offline'; tone = 'warning'; }
+        setText('connection-label', label);
+        $('connection-icon').setAttribute('href', '#' + icon);
+        $('connection-status').dataset.tone = tone;
+        setTime('last-sync', state.lastSync);
+        setText('poll-note', document.hidden ? '后台已暂停更新' : '每 3 秒更新 · 后台暂停');
+        setText('connection-error', state.error);
+        setText('diagnostic-note', '未上报的值显示为 --。' + (state.data && !fresh ? '当前为最近一次同步的数据。' : '') + '诊断信息不包含控制令牌。');
+        setText('dsh-health-label', state.data && !fresh ? 'DSH 状态 · 上次确认' : 'DSH 状态');
+        const d = state.data;
+        let title = '正在连接守护器';
+        let description = '读取本地运行状态。即使 DSH 暂时退出，也可在这里查看守护与恢复进展。';
+        if (!fresh && (d || state.error)) {
+          title = document.hidden ? '状态更新已暂停' : '暂时无法连接守护器';
+          description = d ? '下方保留最近一次收到的真实状态，当前状态尚未确认。连接恢复后将自动更新。' : '尚未取得可用状态。控制台会每 3 秒重试，连接恢复后再开放操作。';
+        } else if (d) {
+          if (d.mode === 'stopped') {
+            title = '守护已手动停止'; description = '守护处于停止状态。DSH 的最后报告见下方；需要继续时，可手动恢复守护。';
+          } else if (d.health === 'blocked' || d.breaker) {
+            title = '守护已阻断，等待处理'; description = '守护器报告了阻断状态。请查看原因与诊断详情，再决定下一步操作。';
+          } else if (d.workflow?.mode === 'rescue') {
+            title = d.health === 'ready' ? '救援环境已就绪' : '当前处于救援模式'; description = '开发成果仍保留。工作区修复后会先经过隔离验证，再尝试返回开发环境；也可手动发起检查。';
+          } else if (d.health === 'ready') {
+            title = d.workflow?.mode === 'supervision' ? 'DSH 已就绪 · Windows 预览' : d.workflow?.mode === 'fixed' ? '固定版本已就绪' : '开发环境已就绪';
+            description = d.workflow?.mode === 'supervision' ? '当前提供 Windows 进程守护；恢复点、救援和自动修复尚未启用，实机验收待完成。' : d.mode === 'observe' ? 'DSH 报告已就绪。守护器当前仅观察，不主动管理进程。' : '已验证的开发改动会自动建立恢复点，原生安装、启停和热加载照常进行。';
+          } else if (d.health === 'degraded') {
+            title = 'DSH 可用，部分能力受限'; description = '服务仍可响应，但部分能力尚未就绪。请结合能力检查与当前操作确认影响。';
+          } else if (d.health === 'failed') {
+            title = 'DSH 当前不可用'; description = '外部守护控制台仍可使用。请查看当前恢复进展、最近活动及守护器说明。';
+          } else {
+            title = d.mode === 'observe' ? '正在观察开发环境' : '正在确认 DSH 状态'; description = '尚未确认 DSH 已就绪。请以能力检查、当前操作与后续状态为准。';
+          }
+        }
+        setText('state-title', title);
+        setText('state-description', description);
+        document.title = (d ? title + ' · ' : '') + 'DSH GUARD · 开发守护';
+        $('reason-block').hidden = !d?.reason;
+        setText('state-reason', own(reasonLabels, d?.reason) || d?.reason);
+        renderGuardHealth();
+        renderActions();
+      }
+      function renderGuardHealth() {
+        const at = timestamp(state.data?.guard?.heartbeat_at);
+        const age = at === null ? null : Date.now() - at;
+        let label = '等待心跳';
+        let tone = 'neutral';
+        if (state.data && !isFresh()) { label = '状态未确认'; tone = 'warning'; }
+        else if (state.data && at === null) label = '未上报心跳';
+        else if (at !== null) {
+          if (age < -5000) { label = '心跳时钟异常'; tone = 'warning'; }
+          else if (age > HEARTBEAT_MS) { label = '心跳已过期'; tone = 'warning'; }
+          else { label = '心跳正常'; tone = 'good'; }
+        }
+        setText('guard-health', label);
+        $('guard-health').dataset.tone = tone;
+      }
+      function renderCapabilities(capabilities) {
+        const key = JSON.stringify(capabilities ?? null);
+        if (key === state.capabilityKey) return;
+        state.capabilityKey = key;
+        const list = Array.isArray(capabilities) ? capabilities.filter(c => c && typeof c === 'object' && !Array.isArray(c)) : [];
+        $('capability-empty').hidden = list.length > 0;
+        $('capability-list').hidden = list.length === 0;
+        const bad = list.filter(item => !['ready', 'disabled'].includes(item.status));
+        const priority = [...bad, ...list.filter(item => item.required && !bad.includes(item)), ...list.filter(item => !bad.includes(item) && !item.required && item.id.startsWith('bridge:'))];
+        const selected = [...new Set(priority)];
+        const shown = state.allCapabilities ? list : selected.length ? selected : list.slice(0, 10);
+        $('capability-toggle').hidden = list.length <= shown.length && !state.allCapabilities;
+        $('capability-toggle').setAttribute('aria-expanded', String(state.allCapabilities));
+        setText('capability-toggle', state.allCapabilities ? '收起 · 只看核心与异常' : '查看全部 ' + list.length + ' 项能力');
+        setText('capability-summary', list.length ? bad.length ? bad.length + ' 项待处理 · 共 ' + list.length + ' 项' : '核心正常 · 共 ' + list.length + ' 项' : '未上报');
+        setText('capability-empty-title', '未上报能力检查');
+        setText('capability-empty-note', '没有检查结果，不代表全部通过。');
+        const fragment = document.createDocumentFragment();
+        for (const item of shown) {
+          const row = makeNode('li', 'capability');
+          const shortId = item.id.replace(/^include:/, '');
+          const name = makeNode('span', 'capability-name', own(capabilityLabels, shortId) || shortId);
+          if (item.required === true) name.append(makeNode('span', 'required', '必需'));
+          const status = makeNode('span', 'tag');
+          status.dataset.tone = toneFor(item.status);
+          status.append(makeIcon(iconFor(status.dataset.tone)), makeNode('span', '', own(capabilityStatusLabels, item.status) || item.status));
+          row.append(name, status);
+          fragment.append(row);
+        }
+        $('capability-list').replaceChildren(fragment);
+      }
+      $('capability-toggle').addEventListener('click', () => {
+        state.allCapabilities = !state.allCapabilities;
+        state.capabilityKey = null;
+        renderCapabilities(state.data?.workflow?.capabilities);
+      });
+      function renderEvents(events) {
+        const key = JSON.stringify(events ?? null);
+        if (key === state.eventKey) return;
+        state.eventKey = key;
+        const list = Array.isArray(events) ? events.filter(e => e && typeof e === 'object' && !Array.isArray(e)) : [];
+        setText('event-count', list.length ? list.length + ' 条记录' : '暂无记录');
+        $('event-empty').hidden = list.length > 0;
+        $('timeline-scroll').hidden = list.length === 0;
+        setText('event-empty-title', '暂无活动记录');
+        setText('event-empty-note', '守护器尚未返回事件。后续活动会自动出现在这里。');
+        const sorted = list.map((event, index) => ({ event, index, at: timestamp(event.time) })).sort((a, b) => (b.at ?? -Infinity) - (a.at ?? -Infinity) || b.index - a.index);
+        const fragment = document.createDocumentFragment();
+        for (const { event, at } of sorted) {
+          const row = document.createElement('li');
+          row.append(makeNode('div', 'event-title', own(eventLabels, event.event) || event.event));
+          const time = makeNode('time', 'event-time', at === null ? '--' : dateFormatter.format(at));
+          if (at !== null) time.dateTime = new Date(at).toISOString();
+          row.append(time);
+          const details = Object.entries(event).filter(([key, value]) => key !== 'time' && key !== 'event' && typeof value === 'string' && value !== '').map(([key, value]) => (own(detailLabels, key) || key) + '：' + value);
+          if (details.length) row.append(makeNode('p', 'event-details', details.join('\n')));
+          fragment.append(row);
+        }
+        $('event-list').replaceChildren(fragment);
+      }
+      function renderData() {
+        const d = state.data;
+        if (!d) return;
+        setText('dsh-health', own(healthLabels, d.health) || d.health);
+        $('dsh-health-wrap').dataset.tone = d.mode === 'stopped' ? 'neutral' : toneFor(d.health);
+        $('dsh-health-icon').setAttribute('href', '#' + (d.mode === 'stopped' ? 'i-pause' : iconFor(toneFor(d.health))));
+        setText('guard-mode', own(modeLabels, d.mode) || d.mode);
+        setText('port', Number.isInteger(d.port) && d.port > 0 && d.port <= 65535 ? d.port : '--');
+        const workflow = d.workflow && typeof d.workflow === 'object' ? d.workflow : {};
+        setText('workflow-mode', own(workflowLabels, workflow.mode) || workflow.mode || '未上报');
+        $('workflow-mode').dataset.tone = workflow.mode === 'rescue' ? 'warning' : 'neutral';
+        setText('current-operation', own(phaseLabels, workflow.phase) || workflow.phase || '未上报当前操作');
+        setText('workflow-message', own(reasonLabels, workflow.message) || workflow.message || (d.workflow ? '守护器未提供操作说明。' : '此守护器尚未上报开发工作流。'));
+        setTime('checkpoint-time', workflow.checkpoint_at);
+        setText('pending-changes', workflow.mode === 'supervision' ? '此版本不创建恢复点' : workflow.pending_changes === true ? '有改动待创建恢复点' : workflow.pending_changes === false ? '无待记录改动' : '--');
+        const bridges = { connected: '已连接', stale: '已过期', missing: '未连接' };
+        setText('bridge-status', '开发桥接 · ' + (own(bridges, workflow.bridge) || text(workflow.bridge)));
+        setTime('guard-heartbeat', d.guard?.heartbeat_at);
+        setText('guard-version', d.guard?.version);
+        setText('repair-status', d.repair_enabled === true ? '已启用' : d.repair_enabled === false ? '未启用' : '--');
+        setText('release', d.release);
+        setText('known-good', d.known_good);
+        setText('owned-child', d.owned_child_alive === true ? '运行中' : d.owned_child_alive === false ? '未运行' : '--');
+        setText('breaker', d.breaker === false || d.breaker === null || d.breaker === '' ? '未触发' : d.breaker === true ? '已触发' : d.breaker);
+        const incident = d.incident && typeof d.incident === 'object' ? d.incident : {};
+        for (const key of ['restarts', 'attempts', 'turns', 'usd']) setText('incident-' + key, typeof incident[key] === 'number' && Number.isFinite(incident[key]) && incident[key] >= 0 ? incident[key] : '--');
+        setText('incident-accounting', incident.accounting_uncertain === true ? '尚不确定，费用可能不完整' : incident.accounting_uncertain === false ? '未报告核算不确定性' : '--');
+        renderCapabilities(workflow.capabilities);
+        renderEvents(d.events);
+      }
+      function actionError(message) {
+        setText('action-error', message);
+        $('action-error').hidden = false;
+      }
+      function showToast(message) {
+        clearTimeout(state.toastTimer);
+        $('toast').hidden = false;
+        setText('toast-message', message);
+        state.toastTimer = setTimeout(() => { $('toast').hidden = true; }, 8000);
+      }
+      async function poll() {
+        renderConnection();
+        if (state.disposed || document.hidden || state.statusRequest) return;
+        const controller = new AbortController();
+        state.statusRequest = controller;
+        let timedOut = false;
+        const timeout = setTimeout(() => { timedOut = true; controller.abort(); }, 9000);
+        try {
+          const response = await fetch('/api/status', { signal: controller.signal, cache: 'no-store', credentials: 'same-origin', mode: 'same-origin', redirect: 'error', headers: { Accept: 'application/json' } });
+          if (!response.ok) throw new Error('状态接口返回 HTTP ' + response.status);
+          const data = await response.json();
+          if (!data || typeof data !== 'object' || Array.isArray(data) || !own(modeLabels, data.mode) || typeof data.health !== 'string') throw new Error('状态接口返回了无效的数据格式');
+          if (controller.signal.aborted || state.disposed) return;
+          state.data = data;
+          const completed = data.last_control;
+          if (state.pending && completed?.request_id === state.pending.id) {
+            const label = actionLabels[state.pending.action];
+            state.pending = null;
+            if (completed.ok) {
+              state.notice = '「' + label + '」已完成。';
+              showToast(state.notice);
+            } else {
+              state.notice = '';
+              actionError(completed.error || '操作未完成，请查看诊断详情。');
+            }
+          } else if (state.pending && !data.control_pending && Date.now() - state.pending.at > 30000) {
+            state.pending = null;
+            state.notice = '请求已结束，但未取得对应结果。请核对最新状态与活动。';
+          }
+          state.connected = true;
+          state.lastSync = Date.now();
+          state.error = '';
+          renderData();
+        } catch (error) {
+          if (state.disposed || (controller.signal.aborted && !timedOut)) return;
+          state.connected = false;
+          state.error = timedOut ? '状态请求超时（9 秒），将继续按 3 秒周期重试。' : error instanceof SyntaxError ? '状态接口返回的内容不是有效 JSON。' : error instanceof TypeError ? '无法连接本地守护器，请确认守护服务是否运行。' : error.message || '状态读取失败';
+        } finally {
+          clearTimeout(timeout);
+          if (state.statusRequest === controller) state.statusRequest = null;
+          if (!state.disposed) renderConnection();
+        }
+      }
+      async function submitAction(action) {
+        if (!canAct(action)) { actionError('当前无法执行此操作。请等待实时状态与控制权限确认后再试。'); return; }
+        const controlToken = token();
+        state.busy = true;
+        state.notice = '正在提交「' + actionLabels[action] + '」…';
+        $('action-error').hidden = true;
+        renderActions();
+        const controller = new AbortController();
+        state.actionRequest = controller;
+        const timeout = setTimeout(() => controller.abort(), 15000);
+        try {
+          const response = await fetch('/api/control', {
+            method: 'POST', signal: controller.signal, credentials: 'same-origin', mode: 'same-origin', redirect: 'error',
+            headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'X-Guard-Token': controlToken },
+            body: JSON.stringify({ action })
+          });
+          let result;
+          try { result = await response.json(); } catch (_) { throw new Error('控制接口返回了无法解析的响应。操作结果尚未确认，请先检查最新状态。'); }
+          if (state.disposed) return;
+          if (response.status !== 202 || result?.accepted !== true) {
+            const message = typeof result?.error === 'string' && result.error ? result.error : '控制请求未被受理（HTTP ' + response.status + '）。';
+            throw new Error(message);
+          }
+          state.pending = result.request_id ? { id: result.request_id, action, at: Date.now() } : null;
+          state.notice = '「' + actionLabels[action] + '」正在执行，状态会自动更新。';
+          showToast(typeof result.message === 'string' && result.message ? '请求已受理：' + result.message : state.notice);
+        } catch (error) {
+          if (state.disposed) return;
+          state.notice = '';
+          actionError(controller.signal.aborted ? '请求超时，操作结果尚未确认。请先查看最新状态，避免重复提交。' : error instanceof TypeError ? '控制请求连接中断，结果尚未确认。请先检查最新状态，再决定是否重试。' : error.message || '控制请求失败');
+        } finally {
+          clearTimeout(timeout);
+          if (state.actionRequest === controller) state.actionRequest = null;
+          state.busy = false;
+          if (!state.disposed) renderActions();
+        }
+      }
+      for (const button of document.querySelectorAll('[data-action]')) button.addEventListener('click', () => {
+        const action = button.dataset.action;
+        if (!canAct(action)) return;
+        if (!own(confirmations, action)) { void submitAction(action); return; }
+        state.confirmAction = action;
+        const [title, message, label] = confirmations[action];
+        setText('confirm-title', title);
+        setText('confirm-message', message);
+        setText('confirm-submit', label);
+        $('confirm-dialog').showModal();
+        $('confirm-cancel').focus();
+      });
+      $('confirm-submit').addEventListener('click', () => {
+        const action = state.confirmAction;
+        $('confirm-dialog').close('confirm');
+        if (action) void submitAction(action);
+      });
+      $('confirm-dialog').addEventListener('close', () => { state.confirmAction = null; });
+      $('toast-close').addEventListener('click', () => { clearTimeout(state.toastTimer); $('toast').hidden = true; });
+      function renderTheme() {
+        const theme = document.documentElement.dataset.theme;
+        const labels = { system: '跟随系统', light: '浅色', dark: '深色' };
+        const next = theme === 'system' ? 'light' : theme === 'light' ? 'dark' : 'system';
+        setText('theme-label', labels[theme]);
+        $('theme-toggle').setAttribute('aria-label', '主题：' + labels[theme] + '；切换为' + labels[next]);
+        $('theme-toggle').dataset.themeMode = theme;
+      }
+      $('theme-toggle').addEventListener('click', () => {
+        const current = document.documentElement.dataset.theme;
+        const next = current === 'system' ? 'light' : current === 'light' ? 'dark' : 'system';
+        document.documentElement.dataset.theme = next;
+        try { localStorage.setItem('dsh-guard-theme', next); } catch (_) { /* The toggle also works without storage. */ }
+        renderTheme();
+      });
+      function stopPolling() {
+        clearInterval(state.pollTimer);
+        state.pollTimer = null;
+        state.statusRequest?.abort();
+      }
+      function startPolling() {
+        if (state.disposed || document.hidden) return;
+        clearInterval(state.pollTimer);
+        state.pollTimer = setInterval(poll, POLL_MS);
+        void poll();
+      }
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden) { stopPolling(); renderConnection(); }
+        else startPolling();
+      });
+      window.addEventListener('pagehide', () => {
+        state.disposed = true;
+        stopPolling();
+        if (state.actionRequest) {
+          state.notice = '上次控制请求的结果尚未确认，请先检查最新状态。';
+          state.actionRequest.abort();
+        }
+        clearTimeout(state.toastTimer);
+        $('toast').hidden = true;
+        if ($('confirm-dialog').open) $('confirm-dialog').close();
+      });
+      window.addEventListener('pageshow', event => {
+        if (!event.persisted) return;
+        state.disposed = false;
+        state.connected = false;
+        startPolling();
+      });
+      renderTheme();
+      startPolling();
+    })();
+  </script>
+</body>
+</html>

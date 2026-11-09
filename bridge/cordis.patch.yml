@@ -1,0 +1,5 @@
+- insert:
+    # Host observer only: publishes no service and needs no isolate realm.
+    # Inert unless the external guard supplies BOTH launch environment values.
+    - id: dsh-guard-bridge
+      name: '@local/dsh-guard-bridge'

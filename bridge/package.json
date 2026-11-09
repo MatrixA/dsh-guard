@@ -1,0 +1,18 @@
+{
+  "name": "@local/dsh-guard-bridge",
+  "version": "0.1.0",
+  "private": true,
+  "license": "MIT",
+  "description": "Optional observational DSH Host heartbeat for an external guard",
+  "type": "module",
+  "main": "./index.mjs",
+  "exports": {
+    ".": "./index.mjs",
+    "./package.json": "./package.json",
+    "./cordis.patch.yml": "./cordis.patch.yml"
+  },
+  "files": ["index.mjs", "cordis.patch.yml"],
+  "engines": { "node": ">=22", "dsh": "0.2.2-rc.1" },
+  "scripts": { "test": "node --test test*.mjs" },
+  "dsh": { "bundle": { "patch": "./cordis.patch.yml" } }
+}
